@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,31 +34,36 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   List<Task> tasks = [];
-  int _counter = 0;
 
-  // @override
-  // void initState(){
-  //   super.initState();
-  // }
-  //
-  // Future<void> _loadPreference() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   setState(() {
-  //     tasks = prefs.getStringList(key)
-  //
-  //   })
-  // }
+  @override
+  void initState(){
+    super.initState();
+    _loadPreference();
+  }
 
-  void _incrementCounter() {
+  Future<void> _loadPreference() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _counter++;
+      String? jsonString = prefs.getString('tasks');
+      if (jsonString != null) {
+        List<dynamic> decoded = jsonDecode(jsonString);
+        tasks = decoded.map((task) => Task.fromJson(task)).toList();
+      }
     });
+  }
+
+  Future<void> _savePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<Map<String, dynamic>> jsonList = tasks.map((task) => task.toJson()).toList();
+    String jsonString = jsonEncode(jsonList);
+    await prefs.setString('tasks',jsonString);
   }
 
   void _createTask() {
     setState(() {
       tasks.add(Task("Task_${tasks.length + 1}", false));
     });
+    _savePreference();
   }
 
   @override
@@ -78,6 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   setState(() {
                     tasks.removeAt(index);
                   });
+                  _savePreference();
                 }
             ),
             );
@@ -97,4 +105,15 @@ class Task {
   bool _isDone = false;
   
   Task(this._title, this._isDone);
+
+  Map<String, dynamic> toJson(){
+    return {
+      'title': _title,
+      'isDone': _isDone,
+    };
+  }
+
+  factory Task.fromJson(Map<String, dynamic> json){
+    return Task(json['title'],json['isDone']);
+  }
 }
