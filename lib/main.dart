@@ -78,16 +78,35 @@ class _MyHomePageState extends State<MyHomePage> {
           itemBuilder: (context, index){
             final task = tasks[index];
             return ListTile(
-              title: Text(task._title),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () {
-                  setState(() {
-                    tasks.removeAt(index);
-                  });
-                  _savePreference();
-                }
-            ),
+              title: Text(
+                  task._title,
+                  style: TextStyle(
+                    decoration: task._isDone ? TextDecoration.lineThrough : TextDecoration.none
+                  )
+              ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min, // để Row không chiếm hết ngang màn hình
+                  children: [
+                    Checkbox(
+                      value: task._isDone,
+                      onChanged: (val) {
+                        setState(() {
+                          task._isDone = val!;
+                        });
+                        _savePreference();
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        setState(() {
+                          tasks.removeAt(index);
+                        });
+                        _savePreference();
+                      },
+                    ),
+                  ],
+                )
             );
           }
       ),
@@ -116,4 +135,6 @@ class Task {
   factory Task.fromJson(Map<String, dynamic> json){
     return Task(json['title'],json['isDone']);
   }
+
+
 }
