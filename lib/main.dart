@@ -97,6 +97,30 @@ class _MyHomePageState extends State<MyHomePage> {
                       },
                     ),
                     IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text("My title"),
+                              content: const Text("This is my message."),
+                              actions: [
+                                TextButton(
+                                child: Text("OK"),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+
+
+                    ),
+                    IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () {
                         setState(() {
@@ -134,6 +158,10 @@ class Task {
 
   factory Task.fromJson(Map<String, dynamic> json){
     return Task(json['title'],json['isDone']);
+  }
+
+  void editTitle(String newTitle){
+    _title = newTitle;
   }
 
 
