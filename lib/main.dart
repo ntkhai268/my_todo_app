@@ -77,59 +77,103 @@ class _MyHomePageState extends State<MyHomePage> {
           itemCount: tasks.length,
           itemBuilder: (context, index){
             final task = tasks[index];
-            return ListTile(
-              title: Text(
-                  task._title,
-                  style: TextStyle(
-                    decoration: task._isDone ? TextDecoration.lineThrough : TextDecoration.none
-                  )
-              ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min, // để Row không chiếm hết ngang màn hình
-                  children: [
-                    Checkbox(
-                      value: task._isDone,
-                      onChanged: (val) {
-                        setState(() {
-                          task._isDone = val!;
-                        });
-                        _savePreference();
-                      },
+            return Dismissible(
+                background: Container(color: Colors.red),
+                key: ValueKey(task._title),
+                onDismissed: (DismissDirection direction) {
+                  final removed = task;
+                  setState(() {
+                    tasks.removeAt(index);
+                  });
+                  _savePreference();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Đã xóa: ${removed._title}"),
+                      action: SnackBarAction(
+                        label: 'Hoàn tác',
+                        onPressed: () {
+                          setState(() {
+                            tasks.insert(index, removed);
+                          });
+                          _savePreference();
+                        },
+                      ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text("My title"),
-                              content: const Text("This is my message."),
-                              actions: [
-                                TextButton(
-                                child: Text("OK"),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                ),
-                              ],
-                            );
+                  );
+                },
+                child: ListTile(
+                    title: Text(
+                        task._title,
+                        style: TextStyle(
+                            decoration: task._isDone ? TextDecoration.lineThrough : TextDecoration.none
+                        )
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min, // để Row không chiếm hết ngang màn hình
+                      children: [
+                        Checkbox(
+                          value: task._isDone,
+                          onChanged: (val) {
+                            setState(() {
+                              task._isDone = val!;
+                            });
+                            _savePreference();
                           },
-                        );
-                      },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () async {
+                            final controller = TextEditingController(text: tasks[index]._title);
+                            final newTitle = await showDialog<String>(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text("My title"),
+                                  content: TextField(
+                                    controller: controller,
+                                    maxLines: 1,
+                                    decoration: const InputDecoration(
+                                      hintText: "Nhập tiêu đề mới",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      child: Text("Hủy"),
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context, controller.text);
+                                      },
+                                      child: Text("Lưu"),
+
+                                    )
+                                  ],
+                                );
+                              },
+                            );
+                            setState(() {
+                              tasks[index]._title = newTitle!;
+                            });
+                          },
 
 
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          tasks.removeAt(index);
-                        });
-                        _savePreference();
-                      },
-                    ),
-                  ],
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              tasks.removeAt(index);
+                            });
+                            _savePreference();
+                          },
+                        ),
+                      ],
+                    )
                 )
             );
           }
