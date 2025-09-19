@@ -72,6 +72,41 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value){
+              if (value == "done"){
+                for (var task in tasks){
+                  setState(() {
+                    task._isDone = true;
+                  });
+                }
+              }
+              else{
+                for (var task in tasks){
+                  setState(() {
+                    task._isDone = false;
+                  });
+                }
+              }
+              _savePreference();
+            },
+            itemBuilder: (context) {
+              return [
+                PopupMenuItem<String>(
+                  value: "done",
+                  child: Text("Mark all as done"),
+                ),
+                PopupMenuItem<String>(
+                  value: "undone",
+                  child: Text("Uncheck all"),
+                ),
+              ];
+            },
+
+          )
+        ],
+
       ),
       body: ListView.builder(
           itemCount: tasks.length,
