@@ -34,6 +34,10 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   List<Task> tasks = [];
+  List<Task> get visibleTasks =>
+      (isSearchClicked && searchText.isNotEmpty)
+          ? tasks.where((t) => t._title.toLowerCase().contains(searchText.toLowerCase())).toList()
+          : tasks;
 
   @override
   void initState(){
@@ -66,10 +70,27 @@ class _MyHomePageState extends State<MyHomePage> {
     _savePreference();
   }
 
+  bool isSearchClicked = false;
+  String searchText = '';
+  final TextEditingController searchController = TextEditingController();
+
+  void onSearchChanged(String value) {
+    setState(() {
+      searchText = value;
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose(); // giải phóng khi widget bị hủy
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final activeTasks = tasks.where((t) => !t._isDone).toList();
-    final doneTasks   = tasks.where((t) =>  t._isDone).toList();
+
+    final activeTasks = visibleTasks.where((t) => !t._isDone).toList();
+    final doneTasks   = visibleTasks.where((t) =>  t._isDone).toList();
 
     final hasDivider = doneTasks.isNotEmpty;
     final itemCountt = activeTasks.length + (hasDivider ? 1 : 0) + doneTasks.length;
@@ -77,7 +98,25 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: isSearchClicked ?
+            Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: TextField(
+                controller: searchController,
+                onChanged: onSearchChanged,
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.fromLTRB(16, 20, 16, 12),
+                  hintStyle: TextStyle(color: Colors.black),
+                  border: InputBorder.none,
+                  hintText: 'Search...'
+                ),
+              ),
+            )
+        : Text(widget.title),
         actions: [
           PopupMenuButton<String>(
             onSelected: (value){
@@ -109,8 +148,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ];
             },
+          ),
+          IconButton(onPressed: () {
+            setState(() {
+              isSearchClicked = !isSearchClicked;
+              print(isSearchClicked);
+              if(!isSearchClicked){
+                searchController.clear();
+              }
 
-          )
+            });
+          }, icon: Icon(isSearchClicked ? Icons.close : Icons.search)),
         ],
 
       ),
@@ -132,7 +180,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 onDismissed: (DismissDirection direction) {
                   final removed = task;
                   setState(() {
-                    tasks.removeAt(index);
+                    tasks.remove(task);
                   });
                   _savePreference();
 
@@ -173,7 +221,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         IconButton(
                           icon: const Icon(Icons.edit),
                           onPressed: () async {
-                            final controller = TextEditingController(text: tasks[index]._title);
+                            final controller = TextEditingController(text: visibleTasks[index]._title);
                             final newTitle = await showDialog<String>(
                               context: context,
                               builder: (BuildContext context) {
@@ -214,7 +262,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () {
                             setState(() {
-                              tasks.removeAt(index);
+                              tasks.remove(task);
                             });
                             _savePreference();
                           },
